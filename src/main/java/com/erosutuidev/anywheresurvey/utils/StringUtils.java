@@ -1,3 +1,9 @@
+/**
+ * Author: Eros Derique Utui
+ * User:erosderiquedev
+ * Date:03/03/2025
+ * Time:13:22
+ */
 package com.erosutuidev.anywheresurvey.utils;
 
 public class StringUtils {
@@ -28,3 +34,4 @@ public class StringUtils {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }
+
