@@ -3,4 +3,19 @@ spring:
   application:
     name: anywheresurvey
     version: 1.0
+  datasource:
+    url: jdbc:postgresql://localhost:5432/anywheresurvey_db
+    username: admin
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
 
