@@ -9,6 +9,9 @@ package com.erosutuidev.anywheresurvey.auth;
 import com.erosutuidev.anywheresurvey.auth.dto.AuthenticationRequest;
 import com.erosutuidev.anywheresurvey.auth.dto.AuthenticationResponse;
 import com.erosutuidev.anywheresurvey.auth.dto.RegisterRequest;
+import com.erosutuidev.anywheresurvey.token.Token;
+import com.erosutuidev.anywheresurvey.token.TokenRepository;
+import com.erosutuidev.anywheresurvey.token.TokenType;
 import com.erosutuidev.anywheresurvey.user.Role;
 import com.erosutuidev.anywheresurvey.user.User;
 import com.erosutuidev.anywheresurvey.user.UserRepository;
@@ -27,6 +30,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TokenRepository tokenRepository;
     
     public AuthenticationResponse register(RegisterRequest request) {
          var user = User.builder()
@@ -36,11 +40,11 @@ public class AuthenticationService {
                  .password(passwordEncoder.encode(request.getPassword()))
                  .role(Role.GESTOR)
                  .build();
-         userRepository.save(user);
-
-         var token = jwtService.generateToken(user);
-         return AuthenticationResponse.builder()
-                 .token(token)
+         var savedUser = userRepository.save(user);
+         var jwtToken = jwtService.generateToken(user);
+        saveUserToken(savedUser, jwtToken);
+        return AuthenticationResponse.builder()
+                 .token(jwtToken)
                  .build();
     }
 
@@ -54,9 +58,36 @@ public class AuthenticationService {
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                 () -> new UsernameNotFoundException("User not found")
         );
-        var token = jwtService.generateToken(user);
+        var jwtToken = jwtService.generateToken(user);
+        revokeAlUserTokens(user);
+        saveUserToken(user, jwtToken);
+
         return AuthenticationResponse.builder()
-                .token(token)
+                .token(jwtToken)
                 .build();
+    }
+
+    private void revokeAlUserTokens(User user) {
+        var validUserTokens = tokenRepository.findAllByValidTokenByUser(user.getId());
+        if (validUserTokens.isEmpty()) {
+            return;
+        }
+        validUserTokens.forEach(token -> {
+            token.setExpired(true);
+            token.setRevoked(true);
+        });
+        tokenRepository.saveAll(validUserTokens);
+    }
+
+    private void saveUserToken(User user, String jwtToken) {
+        var token = Token.builder()
+                .user(user)
+                .token(jwtToken)
+                .tokenType(TokenType.BEARER)
+                .expired(false)
+                .revoked(false)
+                .build();
+
+        tokenRepository.save(token);
     }
 }
