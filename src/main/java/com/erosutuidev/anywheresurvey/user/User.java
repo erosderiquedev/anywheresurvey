@@ -6,6 +6,7 @@
  */
 package com.erosutuidev.anywheresurvey.user;
 
+import com.erosutuidev.anywheresurvey.token.Token;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +36,9 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role; // GESTOR, SUPERVISOR, AGENTE
+
+    @OneToMany(mappedBy = "user")
+    private List<Token> tokens;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
